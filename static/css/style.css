@@ -1,0 +1,154 @@
+:root {
+  --primary: #2563eb;
+  --dark: #1e293b;
+}
+
+body { background: #f8fafc; font-family: 'Segoe UI', sans-serif; }
+
+/* Hero */
+.hero-section {
+  background: linear-gradient(135deg, #1e293b 0%, #2563eb 100%);
+  padding: 4rem 1rem;
+}
+
+/* Step cards (müşteri formu) */
+.step-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 6px rgba(0,0,0,.08);
+  overflow: hidden;
+}
+.step-header {
+  background: #f1f5f9;
+  font-weight: 600;
+  padding: .75rem 1.25rem;
+  font-size: .95rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+.step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  font-size: .8rem;
+  font-weight: 700;
+  margin-right: 6px;
+}
+
+/* Hizmet kartları */
+.service-card { cursor: pointer; }
+.service-inner {
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  transition: all .15s;
+  background: #fafafa;
+}
+.service-card:hover .service-inner { border-color: var(--primary); background: #eff6ff; }
+.service-radio:checked + .service-inner {
+  border-color: var(--primary);
+  background: #eff6ff;
+  box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+}
+
+/* Saat slotları */
+.time-slot {
+  display: inline-block;
+  padding: .45rem .9rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: .9rem;
+  transition: all .15s;
+  background: #fff;
+  margin: 4px;
+}
+.time-slot:hover { border-color: var(--primary); color: var(--primary); }
+.time-slot.selected { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+/* Durum rozetleri */
+.status-badge { font-size: .8rem; padding: .3em .65em; }
+.status-pending   { background: #fef3c7; color: #92400e; }
+.status-confirmed { background: #d1fae5; color: #065f46; }
+.status-completed { background: #dbeafe; color: #1e40af; }
+.status-cancelled { background: #fee2e2; color: #991b1b; }
+
+/* Stat kartları (admin) */
+.stat-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 6px rgba(0,0,0,.07);
+}
+.stat-icon {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem;
+  margin: 0 auto 10px;
+}
+.stat-num { font-size: 1.75rem; font-weight: 700; line-height: 1; }
+.stat-label { font-size: .8rem; color: #64748b; margin-top: 4px; }
+
+/* Takvim */
+.calendar-grid { border: 1px solid #e2e8f0; background: #fff; }
+.cal-header-row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background: #1e293b;
+}
+.cal-header-cell {
+  text-align: center;
+  color: #94a3b8;
+  font-size: .8rem;
+  font-weight: 600;
+  padding: .6rem 0;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.cal-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border-top: 1px solid #f1f5f9;
+}
+.cal-day {
+  min-height: 80px;
+  padding: 8px;
+  border-right: 1px solid #f1f5f9;
+  color: #1e293b;
+  position: relative;
+  transition: background .1s;
+}
+.cal-day:last-child { border-right: none; }
+.cal-day:hover { background: #f8fafc; }
+.cal-day-num { font-weight: 600; font-size: .95rem; }
+.cal-empty { background: #fafafa; }
+.cal-today { background: #eff6ff !important; }
+.cal-today .cal-day-num { color: var(--primary); }
+.cal-sunday .cal-day-num { color: #ef4444; }
+.cal-has-appt { background: #f0fdf4; }
+.cal-appt-badge {
+  display: inline-block;
+  background: #22c55e;
+  color: #fff;
+  font-size: .7rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 20px;
+  margin-top: 4px;
+}
+.legend-dot {
+  display: inline-block;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+/* Randevu gün detay kartları */
+.appt-card-completed { border-left: 4px solid #3b82f6 !important; }
+.appt-card-confirmed { border-left: 4px solid #22c55e !important; }
+.appt-card-pending   { border-left: 4px solid #f59e0b !important; }
+.appt-card-cancelled { border-left: 4px solid #ef4444 !important; opacity: .6; }

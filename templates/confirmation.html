@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Randevu Onaylandı{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width: 600px;">
+  <div class="text-center mb-4">
+    <div class="success-icon mb-3">
+      <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
+    </div>
+    <h2 class="fw-bold">Randevunuz Alındı!</h2>
+    <p class="text-muted">Sizi bekliyoruz.</p>
+  </div>
+
+  <div class="card shadow-sm border-0 mb-4">
+    <div class="card-body p-4">
+      <div class="text-center mb-3">
+        <span class="badge bg-warning text-dark fs-6 px-3 py-2">Randevu #{{ appt_id }}</span>
+      </div>
+      <hr>
+      <div class="row g-3">
+        <div class="col-6">
+          <div class="text-muted small">Müşteri</div>
+          <div class="fw-semibold">{{ customer_name }}</div>
+        </div>
+        <div class="col-6">
+          <div class="text-muted small">Hizmet</div>
+          <div class="fw-semibold">{{ service }}</div>
+        </div>
+        <div class="col-6">
+          <div class="text-muted small">Tarih</div>
+          <div class="fw-semibold">{{ date_display }}</div>
+        </div>
+        <div class="col-6">
+          <div class="text-muted small">Saat</div>
+          <div class="fw-semibold">{{ time }}</div>
+        </div>
+        <div class="col-6">
+          <div class="text-muted small">Süre</div>
+          <div class="fw-semibold">{{ duration }} dakika</div>
+        </div>
+        <div class="col-6">
+          <div class="text-muted small">Ücret</div>
+          <div class="fw-semibold text-primary">{{ price }} ₺</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-info">
+    <i class="bi bi-info-circle me-2"></i>
+    Randevunuzu iptal etmeniz gerekirse lütfen önceden arayın.
+  </div>
+
+  <div class="d-grid">
+    <a href="/" class="btn btn-primary btn-lg">
+      <i class="bi bi-plus-circle me-2"></i>Yeni Randevu Al
+    </a>
+  </div>
+</div>
+{% endblock %}

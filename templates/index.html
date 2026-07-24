@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Randevu Al — Berber{% endblock %}
+
+{% block content %}
+<div class="hero-section py-5 text-center text-white">
+  <div class="container">
+    <i class="bi bi-scissors display-3 mb-3"></i>
+    <h1 class="fw-bold display-5">Online Randevu Al</h1>
+    <p class="lead mb-0">Hızlı ve kolay, bekleme yok.</p>
+  </div>
+</div>
+
+<div class="container py-5" style="max-width: 720px;">
+
+  <form action="/randevu-al" method="POST" id="bookingForm">
+
+    <!-- Adım 1: Hizmet -->
+    <div class="step-card mb-4">
+      <div class="step-header"><span class="step-num">1</span> Hizmet Seçin</div>
+      <div class="row g-3 p-3">
+        {% for s in services %}
+        <div class="col-6 col-md-4">
+          <label class="service-card w-100 h-100">
+            <input type="radio" name="service" value="{{ s.name }}" required class="d-none service-radio">
+            <div class="service-inner p-3 text-center">
+              <div class="fw-semibold">{{ s.name }}</div>
+              <div class="text-muted small">{{ s.duration }} dk</div>
+              <div class="text-primary fw-bold mt-1">{{ s.price }} ₺</div>
+            </div>
+          </label>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Adım 2: Tarih -->
+    <div class="step-card mb-4">
+      <div class="step-header"><span class="step-num">2</span> Tarih Seçin</div>
+      <div class="p-3">
+        <input type="date" id="dateInput" name="date" class="form-control form-control-lg"
+               min="{{ min_date }}" max="{{ max_date }}" required>
+        <div id="closedMsg" class="alert alert-warning mt-2 d-none">
+          <i class="bi bi-exclamation-triangle-fill me-1"></i>Pazar günleri kapalıyız.
+        </div>
+      </div>
+    </div>
+
+    <!-- Adım 3: Saat -->
+    <div class="step-card mb-4" id="timeStep">
+      <div class="step-header"><span class="step-num">3</span> Saat Seçin</div>
+      <div class="p-3" id="slotsContainer">
+        <p class="text-muted text-center py-3">
+          <i class="bi bi-arrow-up-circle me-1"></i>Önce hizmet ve tarih seçin.
+        </p>
+      </div>
+      <input type="hidden" name="time" id="selectedTime" required>
+    </div>
+
+    <!-- Adım 4: Bilgiler -->
+    <div class="step-card mb-4">
+      <div class="step-header"><span class="step-num">4</span> Bilgileriniz</div>
+      <div class="p-3">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Ad Soyad</label>
+          <input type="text" name="customer_name" class="form-control form-control-lg"
+                 placeholder="Ahmet Yılmaz" required>
+        </div>
+        <div class="mb-1">
+          <label class="form-label fw-semibold">Telefon</label>
+          <input type="tel" name="phone" class="form-control form-control-lg"
+                 placeholder="05xx xxx xx xx" required>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-grid">
+      <button type="submit" class="btn btn-primary btn-lg py-3 fw-bold" id="submitBtn">
+        <i class="bi bi-calendar-check me-2"></i>Randevu Oluştur
+      </button>
+    </div>
+
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/booking.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}Admin Panel — Berber{% endblock %}
+
+{% block navbar %}
+<nav class="navbar navbar-dark bg-dark px-3">
+  <a class="navbar-brand fw-bold" href="/admin/panel">
+    <i class="bi bi-scissors me-2"></i>Berber Admin
+  </a>
+  <div class="d-flex gap-2">
+    <a href="/admin/takvim" class="btn btn-outline-light btn-sm"><i class="bi bi-calendar3 me-1"></i>Takvim</a>
+    <a href="/admin/randevular" class="btn btn-outline-light btn-sm"><i class="bi bi-list-ul me-1"></i>Tümü</a>
+    <a href="/admin/cikis" class="btn btn-outline-danger btn-sm"><i class="bi bi-box-arrow-right"></i></a>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container-lg py-4">
+
+  <h5 class="text-muted mb-4">{{ today_str }} — Bugünün Özeti</h5>
+
+  <!-- İstatistik kartları -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="stat-card text-center p-3">
+        <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-calendar-day"></i></div>
+        <div class="stat-num">{{ stats.today }}</div>
+        <div class="stat-label">Bugünkü Randevu</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card text-center p-3">
+        <div class="stat-icon bg-success-subtle text-success"><i class="bi bi-calendar-week"></i></div>
+        <div class="stat-num">{{ stats.weekly }}</div>
+        <div class="stat-label">Bu Hafta</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card text-center p-3">
+        <div class="stat-icon bg-warning-subtle text-warning"><i class="bi bi-hourglass-split"></i></div>
+        <div class="stat-num">{{ stats.pending }}</div>
+        <div class="stat-label">Bekleyen</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card text-center p-3">
+        <div class="stat-icon bg-info-subtle text-info"><i class="bi bi-cash-coin"></i></div>
+        <div class="stat-num">{{ stats.revenue_today }} ₺</div>
+        <div class="stat-label">Bugün Kazanç</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Bugünkü randevular -->
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white fw-semibold border-0 pt-3">
+          <i class="bi bi-clock-history me-2 text-primary"></i>Bugünkü Randevular
+        </div>
+        <div class="card-body p-0">
+          {% if today_appts %}
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Saat</th>
+                  <th>Müşteri</th>
+                  <th>Hizmet</th>
+                  <th>Telefon</th>
+                  <th>Durum</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for a in today_appts %}
+                <tr>
+                  <td class="fw-bold text-primary">{{ a.appointment_time }}</td>
+                  <td>{{ a.customer_name }}</td>
+                  <td><span class="badge bg-light text-dark border">{{ a.service }}</span></td>
+                  <td>{{ a.phone }}</td>
+                  <td>
+                    <span class="badge status-badge status-{{ a.status }}">
+                      {{ {'pending':'Bekliyor','confirmed':'Onaylandı','completed':'Tamamlandı','cancelled':'İptal'}[a.status] }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="btn-group btn-group-sm">
+                      {% if a.status == 'pending' %}
+                        <button class="btn btn-outline-success" onclick="changeStatus({{ a.id }}, 'confirmed')"><i class="bi bi-check"></i></button>
+                      {% endif %}
+                      {% if a.status in ('pending','confirmed') %}
+                        <button class="btn btn-outline-primary" onclick="changeStatus({{ a.id }}, 'completed')"><i class="bi bi-check-all"></i></button>
+                        <button class="btn btn-outline-danger" onclick="changeStatus({{ a.id }}, 'cancelled')"><i class="bi bi-x"></i></button>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="text-center py-5 text-muted">
+            <i class="bi bi-calendar-x display-4 d-block mb-2"></i>Bugün randevu yok.
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Hizmet istatistiği -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white fw-semibold border-0 pt-3">
+          <i class="bi bi-bar-chart me-2 text-primary"></i>Hizmet Dağılımı
+        </div>
+        <div class="card-body">
+          {% if service_stats %}
+            {% set max_cnt = service_stats[0].cnt %}
+            {% for s in service_stats %}
+            <div class="mb-3">
+              <div class="d-flex justify-content-between mb-1">
+                <span class="small fw-semibold">{{ s.service }}</span>
+                <span class="small text-muted">{{ s.cnt }} randevu</span>
+              </div>
+              <div class="progress" style="height:8px;">
+                <div class="progress-bar bg-primary" style="width:{{ (s.cnt / max_cnt * 100)|int }}%"></div>
+              </div>
+            </div>
+            {% endfor %}
+          {% else %}
+            <p class="text-muted text-center py-4">Henüz veri yok.</p>
+          {% endif %}
+
+          <hr class="mt-4">
+          <div class="d-flex justify-content-between text-muted small">
+            <span>Toplam randevu</span>
+            <strong class="text-dark">{{ stats.total }}</strong>
+          </div>
+          <div class="d-flex justify-content-between text-muted small mt-1">
+            <span>Bu hafta kazanç</span>
+            <strong class="text-success">{{ stats.revenue_week }} ₺</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function changeStatus(id, status) {
+  const labels = {confirmed:'Onayla', completed:'Tamamlandı olarak işaretle', cancelled:'İptal et'};
+  if (!confirm(labels[status] + '?')) return;
+  fetch('/admin/durum-guncelle', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({id, status})
+  }).then(() => location.reload());
+}
+</script>
+{% endblock %}

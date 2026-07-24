@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Tüm Randevular — Admin{% endblock %}
+
+{% block navbar %}
+<nav class="navbar navbar-dark bg-dark px-3">
+  <a class="navbar-brand fw-bold" href="/admin/panel">
+    <i class="bi bi-scissors me-2"></i>Berber Admin
+  </a>
+  <div class="d-flex gap-2">
+    <a href="/admin/panel" class="btn btn-outline-light btn-sm"><i class="bi bi-speedometer2 me-1"></i>Panel</a>
+    <a href="/admin/takvim" class="btn btn-outline-light btn-sm"><i class="bi bi-calendar3 me-1"></i>Takvim</a>
+    <a href="/admin/cikis" class="btn btn-outline-danger btn-sm"><i class="bi bi-box-arrow-right"></i></a>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container-lg py-4">
+  <h5 class="mb-4 fw-bold">Tüm Randevular</h5>
+
+  <!-- Filtreler -->
+  <form method="GET" class="row g-2 mb-4">
+    <div class="col-auto">
+      <input type="date" name="tarih" class="form-control" value="{{ filter_date }}">
+    </div>
+    <div class="col-auto">
+      <select name="durum" class="form-select">
+        <option value="">Tüm Durumlar</option>
+        <option value="pending"   {% if filter_status=='pending'    %}selected{% endif %}>Bekliyor</option>
+        <option value="confirmed" {% if filter_status=='confirmed'  %}selected{% endif %}>Onaylandı</option>
+        <option value="completed" {% if filter_status=='completed'  %}selected{% endif %}>Tamamlandı</option>
+        <option value="cancelled" {% if filter_status=='cancelled'  %}selected{% endif %}>İptal</option>
+      </select>
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-primary"><i class="bi bi-funnel me-1"></i>Filtrele</button>
+      <a href="/admin/randevular" class="btn btn-outline-secondary ms-1">Temizle</a>
+    </div>
+  </form>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+      {% if appointments %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-dark">
+            <tr>
+              <th>#</th>
+              <th>Tarih</th>
+              <th>Saat</th>
+              <th>Müşteri</th>
+              <th>Telefon</th>
+              <th>Hizmet</th>
+              <th>Ücret</th>
+              <th>Durum</th>
+              <th>İşlem</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in appointments %}
+            <tr>
+              <td class="text-muted small">{{ a.id }}</td>
+              <td>{{ a.date_display }}</td>
+              <td class="fw-bold">{{ a.appointment_time }}</td>
+              <td>{{ a.customer_name }}</td>
+              <td>{{ a.phone }}</td>
+              <td><span class="badge bg-light text-dark border">{{ a.service }}</span></td>
+              <td>{{ a.price }} ₺</td>
+              <td>
+                <span class="badge status-badge status-{{ a.status }}">
+                  {{ {'pending':'Bekliyor','confirmed':'Onaylandı','completed':'Tamamlandı','cancelled':'İptal'}[a.status] }}
+                </span>
+              </td>
+              <td>
+                <div class="btn-group btn-group-sm">
+                  {% if a.status == 'pending' %}
+                    <button class="btn btn-outline-success" title="Onayla" onclick="changeStatus({{ a.id }}, 'confirmed')"><i class="bi bi-check"></i></button>
+                  {% endif %}
+                  {% if a.status in ('pending', 'confirmed') %}
+                    <button class="btn btn-outline-primary" title="Tamamlandı" onclick="changeStatus({{ a.id }}, 'completed')"><i class="bi bi-check-all"></i></button>
+                    <button class="btn btn-outline-danger" title="İptal" onclick="changeStatus({{ a.id }}, 'cancelled')"><i class="bi bi-x"></i></button>
+                  {% endif %}
+                  {% if a.status == 'cancelled' %}
+                    <button class="btn btn-outline-secondary" title="Geri Al" onclick="changeStatus({{ a.id }}, 'pending')"><i class="bi bi-arrow-counterclockwise"></i></button>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="px-3 py-2 text-muted small border-top">
+        Toplam {{ appointments|length }} randevu
+      </div>
+      {% else %}
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-inbox display-4 d-block mb-2"></i>Randevu bulunamadı.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function changeStatus(id, status) {
+  const labels = {confirmed:'Onayla', completed:'Tamamlandı olarak işaretle', cancelled:'İptal et', pending:'Bekleyene al'};
+  if (!confirm(labels[status] + '?')) return;
+  fetch('/admin/durum-guncelle', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({id, status})
+  }).then(() => location.reload());
+}
+</script>
+{% endblock %}

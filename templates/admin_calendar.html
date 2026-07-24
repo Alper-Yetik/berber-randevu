@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Takvim — Admin{% endblock %}
+
+{% block navbar %}
+<nav class="navbar navbar-dark bg-dark px-3">
+  <a class="navbar-brand fw-bold" href="/admin/panel">
+    <i class="bi bi-scissors me-2"></i>Berber Admin
+  </a>
+  <div class="d-flex gap-2">
+    <a href="/admin/panel" class="btn btn-outline-light btn-sm"><i class="bi bi-speedometer2 me-1"></i>Panel</a>
+    <a href="/admin/randevular" class="btn btn-outline-light btn-sm"><i class="bi bi-list-ul me-1"></i>Liste</a>
+    <a href="/admin/cikis" class="btn btn-outline-danger btn-sm"><i class="bi bi-box-arrow-right"></i></a>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container-lg py-4" style="max-width: 900px;">
+
+  <!-- Ay navigasyonu -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <a href="/admin/takvim?yil={{ prev_year }}&ay={{ prev_month }}" class="btn btn-outline-secondary">
+      <i class="bi bi-chevron-left"></i>
+    </a>
+    <h4 class="mb-0 fw-bold">{{ month_name }} {{ year }}</h4>
+    <a href="/admin/takvim?yil={{ next_year }}&ay={{ next_month }}" class="btn btn-outline-secondary">
+      <i class="bi bi-chevron-right"></i>
+    </a>
+  </div>
+
+  <!-- Takvim -->
+  <div class="calendar-grid shadow-sm rounded overflow-hidden">
+    <!-- Gün başlıkları -->
+    <div class="cal-header-row">
+      {% for d in days_tr %}
+      <div class="cal-header-cell {% if loop.index0 == 6 %}text-danger{% endif %}">{{ d }}</div>
+      {% endfor %}
+    </div>
+
+    <!-- Haftalar -->
+    {% for week in cal %}
+    <div class="cal-week">
+      {% for day in week %}
+      {% if day == 0 %}
+        <div class="cal-day cal-empty"></div>
+      {% else %}
+        {% set date_str = "%04d-%02d-%02d"|format(year, month, day) %}
+        {% set cnt = appt_map.get(date_str, 0) %}
+        {% set is_today = (date_str == today) %}
+        {% set weekday = loop.index0 %}
+        <a href="/admin/gun-detay?tarih={{ date_str }}"
+           class="cal-day {% if is_today %}cal-today{% endif %} {% if weekday == 6 %}cal-sunday{% endif %} {% if cnt > 0 %}cal-has-appt{% endif %} text-decoration-none">
+          <div class="cal-day-num">{{ day }}</div>
+          {% if cnt > 0 %}
+          <div class="cal-appt-badge">{{ cnt }} randevu</div>
+          {% endif %}
+        </a>
+      {% endif %}
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Lejant -->
+  <div class="d-flex gap-3 mt-3 text-muted small">
+    <span><span class="legend-dot bg-primary"></span> Bugün</span>
+    <span><span class="legend-dot bg-success"></span> Randevu var</span>
+    <span><span class="legend-dot bg-light border"></span> Boş gün</span>
+  </div>
+</div>
+{% endblock %}
