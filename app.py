@@ -391,11 +391,11 @@ def admin_day_detail():
 init_db()
 
 if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    debug = not USE_PG
     print("=" * 50)
     print(" Berber Randevu Sistemi Başladı")
     print(f" Veritabanı: {'PostgreSQL' if USE_PG else 'SQLite (lokal)'}")
-    print(" Müşteri sayfası: http://localhost:5000")
-    print(" Admin paneli:    http://localhost:5000/admin")
-    print(" Admin şifresi:   admin123")
+    print(f" http://localhost:{port}")
     print("=" * 50)
-    app.run(debug=True, port=5000)
+    app.run(host='0.0.0.0', port=port, debug=debug)
