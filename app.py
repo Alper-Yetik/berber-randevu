@@ -308,6 +308,19 @@ def admin_dashboard():
         today_appts=today_appts, stats=stats,
         service_stats=service_stats, today=today, today_str=today_str)
 
+@app.route('/admin/canli-randevular')
+@admin_required
+def canli_randevular():
+    today = date.today().isoformat()
+    conn  = get_conn()
+    rows  = qfetchall(conn,
+        f"SELECT id, customer_name, phone, service, appointment_time, status "
+        f"FROM appointments WHERE appointment_date = {PH} AND status != 'cancelled' ORDER BY appointment_time",
+        (today,))
+    conn.close()
+    return jsonify(rows)
+
+
 @app.route('/admin/randevular')
 @admin_required
 def admin_appointments():

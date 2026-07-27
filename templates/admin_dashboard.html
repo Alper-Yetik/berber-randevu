@@ -72,9 +72,9 @@
                   <th></th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody id="bugunTablosu">
                 {% for a in today_appts %}
-                <tr>
+                <tr id="satir-{{ a.id }}">
                   <td class="fw-bold text-primary">{{ a.appointment_time }}</td>
                   <td>{{ a.customer_name }}</td>
                   <td><span class="badge bg-light text-dark border">{{ a.service }}</span></td>
@@ -160,5 +160,57 @@ function changeStatus(id, status) {
     body: JSON.stringify({id, status})
   }).then(() => location.reload());
 }
+
+// Canlı güncelleme
+const statusLabels = {pending:'Bekliyor', confirmed:'Onaylandı', completed:'Tamamlandı', cancelled:'İptal'};
+let bilinen_ids = new Set([{% for a in today_appts %}{{ a.id }},{% endfor %}]);
+
+function satirOlustur(a) {
+  const butonlar = a.status === 'pending'
+    ? `<button class="btn btn-outline-success btn-sm" onclick="changeStatus(${a.id},'confirmed')"><i class="bi bi-check"></i></button>
+       <button class="btn btn-outline-primary btn-sm" onclick="changeStatus(${a.id},'completed')"><i class="bi bi-check-all"></i></button>
+       <button class="btn btn-outline-danger btn-sm" onclick="changeStatus(${a.id},'cancelled')"><i class="bi bi-x"></i></button>`
+    : a.status === 'confirmed'
+    ? `<button class="btn btn-outline-primary btn-sm" onclick="changeStatus(${a.id},'completed')"><i class="bi bi-check-all"></i></button>
+       <button class="btn btn-outline-danger btn-sm" onclick="changeStatus(${a.id},'cancelled')"><i class="bi bi-x"></i></button>`
+    : '';
+  return `<tr id="satir-${a.id}">
+    <td class="fw-bold text-primary">${a.appointment_time}</td>
+    <td>${a.customer_name}</td>
+    <td><span class="badge bg-light text-dark border">${a.service}</span></td>
+    <td>${a.phone}</td>
+    <td><span class="badge status-badge status-${a.status}">${statusLabels[a.status]}</span></td>
+    <td><div class="btn-group btn-group-sm">${butonlar}</div></td>
+  </tr>`;
+}
+
+function bildirimGoster(mesaj) {
+  const div = document.createElement('div');
+  div.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 end-0 m-3 shadow';
+  div.style.zIndex = 9999;
+  div.innerHTML = `<i class="bi bi-bell-fill me-2"></i>${mesaj}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 5000);
+}
+
+function guncelle() {
+  fetch('/admin/canli-randevular')
+    .then(r => r.json())
+    .then(randevular => {
+      const tbody = document.getElementById('bugunTablosu');
+      if (!tbody) return;
+
+      randevular.forEach(a => {
+        if (!bilinen_ids.has(a.id)) {
+          bilinen_ids.add(a.id);
+          tbody.insertAdjacentHTML('beforeend', satirOlustur(a));
+          bildirimGoster(`Yeni randevu: ${a.customer_name} — ${a.appointment_time}`);
+        }
+      });
+    })
+    .catch(() => {});
+}
+
+setInterval(guncelle, 30000);
 </script>
 {% endblock %}
