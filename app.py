@@ -388,7 +388,10 @@ def admin_day_detail():
         appts=appts, day=day, day_display=day_display)
 
 
-init_db()
+try:
+    init_db()
+except Exception as e:
+    print(f"DB init uyarı: {e}")
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
