@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
+from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, date, timedelta
 import calendar
 import os
@@ -136,6 +137,24 @@ def init_db():
         ON appointments (appointment_date, appointment_time)
         WHERE status != 'cancelled'
     """)
+    qexecute(conn, "CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
+
+    if qfetchone(conn, f"SELECT 1 FROM settings WHERE key = {PH}", ('admin_password_hash',)) is None:
+        qexecute(conn,
+            f"INSERT INTO settings (key, value) VALUES ({PH}, {PH})",
+            ('admin_password_hash', generate_password_hash(ADMIN_PASSWORD)))
+    conn.close()
+
+def get_admin_password_hash():
+    conn = get_conn()
+    row = qfetchone(conn, f"SELECT value FROM settings WHERE key = {PH}", ('admin_password_hash',))
+    conn.close()
+    return row['value'] if row else generate_password_hash(ADMIN_PASSWORD)
+
+def set_admin_password_hash(new_hash):
+    conn = get_conn()
+    sql = f"UPDATE settings SET value = {PH} WHERE key = {PH}"
+    qexecute(conn, sql, (new_hash, 'admin_password_hash'))
     conn.close()
 
 
@@ -274,7 +293,7 @@ def admin_login():
     if session.get('admin'):
         return redirect(url_for('admin_dashboard'))
     if request.method == 'POST':
-        if request.form.get('password') == ADMIN_PASSWORD:
+        if check_password_hash(get_admin_password_hash(), request.form.get('password', '')):
             session['admin'] = True
             return redirect(url_for('admin_dashboard'))
         flash('Yanlış şifre!', 'error')
@@ -284,6 +303,26 @@ def admin_login():
 def admin_logout():
     session.pop('admin', None)
     return redirect(url_for('admin_login'))
+
+@app.route('/admin/sifre-degistir', methods=['GET', 'POST'])
+@admin_required
+def admin_change_password():
+    if request.method == 'POST':
+        current  = request.form.get('current_password', '')
+        new_pw   = request.form.get('new_password', '')
+        new_pw2  = request.form.get('new_password2', '')
+
+        if not check_password_hash(get_admin_password_hash(), current):
+            flash('Mevcut şifre yanlış.', 'error')
+        elif len(new_pw) < 6:
+            flash('Yeni şifre en az 6 karakter olmalı.', 'error')
+        elif new_pw != new_pw2:
+            flash('Yeni şifreler eşleşmiyor.', 'error')
+        else:
+            set_admin_password_hash(generate_password_hash(new_pw))
+            flash('Şifre başarıyla değiştirildi.', 'success')
+            return redirect(url_for('admin_dashboard'))
+    return render_template('admin_change_password.html')
 
 @app.route('/admin/panel')
 @admin_required
