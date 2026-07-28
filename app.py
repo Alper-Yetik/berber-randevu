@@ -23,7 +23,7 @@ else:
     PH = '?'
     SlotTakenError = sqlite3.IntegrityError
 
-SERVICES = [
+DEFAULT_SERVICES = [
     {'name': 'Saç Kesimi',    'duration': 30, 'price': 150},
     {'name': 'Sakal Düzeltme','duration': 20, 'price': 100},
     {'name': 'Saç + Sakal',   'duration': 45, 'price': 230},
@@ -143,6 +143,44 @@ def init_db():
         qexecute(conn,
             f"INSERT INTO settings (key, value) VALUES ({PH}, {PH})",
             ('admin_password_hash', generate_password_hash(ADMIN_PASSWORD)))
+
+    if USE_PG:
+        qexecute(conn, """
+            CREATE TABLE IF NOT EXISTS services (
+                id       SERIAL PRIMARY KEY,
+                name     TEXT NOT NULL UNIQUE,
+                duration INTEGER NOT NULL,
+                price    INTEGER NOT NULL,
+                sira     INTEGER NOT NULL
+            )
+        """)
+    else:
+        qexecute(conn, """
+            CREATE TABLE IF NOT EXISTS services (
+                id       INTEGER PRIMARY KEY AUTOINCREMENT,
+                name     TEXT NOT NULL UNIQUE,
+                duration INTEGER NOT NULL,
+                price    INTEGER NOT NULL,
+                sira     INTEGER NOT NULL
+            )
+        """)
+
+    if qfetchone(conn, "SELECT 1 FROM services") is None:
+        for i, s in enumerate(DEFAULT_SERVICES):
+            qexecute(conn,
+                f"INSERT INTO services (name, duration, price, sira) VALUES ({PH},{PH},{PH},{PH})",
+                (s['name'], s['duration'], s['price'], i))
+    conn.close()
+
+def get_services():
+    conn = get_conn()
+    rows = qfetchall(conn, "SELECT id, name, duration, price FROM services ORDER BY sira, id")
+    conn.close()
+    return rows
+
+def update_service_price(service_id, price):
+    conn = get_conn()
+    qexecute(conn, f"UPDATE services SET price = {PH} WHERE id = {PH}", (price, service_id))
     conn.close()
 
 def get_admin_password_hash():
@@ -194,7 +232,7 @@ def get_blocked_slots(date_str):
 def index():
     today    = date.today().isoformat()
     max_date = (date.today() + timedelta(days=60)).isoformat()
-    return render_template('index.html', services=SERVICES,
+    return render_template('index.html', services=get_services(),
                            min_date=today, max_date=max_date)
 
 @app.route('/musait-saatler')
@@ -211,7 +249,7 @@ def musait_saatler():
         return jsonify([])
     if datetime.strptime(date_str, '%Y-%m-%d').weekday() not in WORKING_HOURS['working_days']:
         return jsonify({'kapali': True})
-    service = next((s for s in SERVICES if s['name'] == service_name), None)
+    service = next((s for s in get_services() if s['name'] == service_name), None)
     if not service:
         return jsonify([])
 
@@ -244,7 +282,7 @@ def randevu_al():
     if not all([name, phone, svc_name, date_str, time_str]):
         flash('Lütfen tüm alanları doldurun.', 'error')
         return redirect(url_for('index'))
-    service = next((s for s in SERVICES if s['name'] == svc_name), None)
+    service = next((s for s in get_services() if s['name'] == svc_name), None)
     if not service:
         flash('Geçersiz hizmet seçimi.', 'error')
         return redirect(url_for('index'))
@@ -324,6 +362,18 @@ def admin_change_password():
             flash('Şifre başarıyla değiştirildi.', 'success')
             return redirect(url_for('admin_dashboard'))
     return render_template('admin_change_password.html')
+
+@app.route('/admin/hizmetler', methods=['GET', 'POST'])
+@admin_required
+def admin_services():
+    if request.method == 'POST':
+        for s in get_services():
+            price_str = request.form.get(f"price_{s['id']}", '').strip()
+            if price_str.isdigit():
+                update_service_price(s['id'], int(price_str))
+        flash('Fiyatlar güncellendi.', 'success')
+        return redirect(url_for('admin_services'))
+    return render_template('admin_services.html', services=get_services())
 
 @app.route('/admin/panel')
 @admin_required
