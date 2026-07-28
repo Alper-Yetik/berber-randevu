@@ -59,3 +59,12 @@ function selectTime(el) {
 
 serviceRadios.forEach(r => r.addEventListener('change', loadSlots));
 dateInput.addEventListener('change', loadSlots);
+
+const bookingForm = document.getElementById('bookingForm');
+const submitBtn   = document.getElementById('submitBtn');
+if (bookingForm && submitBtn) {
+  bookingForm.addEventListener('submit', () => {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = 'Gönderiliyor…';
+  });
+}

@@ -14,11 +14,13 @@ if DATABASE_URL.startswith('postgres://'):
 USE_PG = bool(DATABASE_URL)
 
 if USE_PG:
-    import psycopg2, psycopg2.extras
+    import psycopg2, psycopg2.extras, psycopg2.errors
     PH = '%s'
+    SlotTakenError = psycopg2.errors.UniqueViolation
 else:
     import sqlite3
     PH = '?'
+    SlotTakenError = sqlite3.IntegrityError
 
 SERVICES = [
     {'name': 'Saç Kesimi',    'duration': 30, 'price': 150},
@@ -129,6 +131,11 @@ def init_db():
             )
         """
     qexecute(conn, sql)
+    qexecute(conn, """
+        CREATE UNIQUE INDEX IF NOT EXISTS ux_appt_slot
+        ON appointments (appointment_date, appointment_time)
+        WHERE status != 'cancelled'
+    """)
     conn.close()
 
 
@@ -222,15 +229,25 @@ def randevu_al():
     if not service:
         flash('Geçersiz hizmet seçimi.', 'error')
         return redirect(url_for('index'))
-    if time_str in get_blocked_slots(date_str):
+    slot_dur = WORKING_HOURS['slot_duration']
+    n_needed = (service['duration'] + slot_dur - 1) // slot_dur
+    slot_dt  = datetime.strptime(time_str, '%H:%M')
+    needed_slots = {(slot_dt + timedelta(minutes=i * slot_dur)).strftime('%H:%M') for i in range(n_needed)}
+    if needed_slots & get_blocked_slots(date_str):
         flash('Bu saat doldu. Lütfen başka bir saat seçin.', 'error')
         return redirect(url_for('index'))
 
     conn = get_conn()
-    appt_id = qinsert(conn,
-        f"INSERT INTO appointments (customer_name, phone, service, duration, price, appointment_date, appointment_time) "
-        f"VALUES ({PH},{PH},{PH},{PH},{PH},{PH},{PH})",
-        (name, phone, svc_name, service['duration'], service['price'], date_str, time_str))
+    try:
+        appt_id = qinsert(conn,
+            f"INSERT INTO appointments (customer_name, phone, service, duration, price, appointment_date, appointment_time) "
+            f"VALUES ({PH},{PH},{PH},{PH},{PH},{PH},{PH})",
+            (name, phone, svc_name, service['duration'], service['price'], date_str, time_str))
+    except SlotTakenError:
+        conn.rollback()
+        conn.close()
+        flash('Bu saat doldu. Lütfen başka bir saat seçin.', 'error')
+        return redirect(url_for('index'))
     conn.close()
 
     d = datetime.strptime(date_str, '%Y-%m-%d')
