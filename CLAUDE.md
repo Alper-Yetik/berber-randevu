@@ -1,24 +1,11 @@
-# Berber Randevu Sistemi
+Proje tanıtımı, özellikler ve kurulum için `README.md`'ye bak. Bu dosya yalnızca Claude Code'a özel altyapı detayları ve kod içinden kolayca anlaşılmayan mimari kararları içerir.
 
-Web tabanlı berber randevu sistemi. Müşteriler siteden randevu alıyor, manuel defter tutmaya gerek kalmıyor.
+## Altyapı
+- Render service: `berber-randevu` (srv-d9hie47lk1mc73e1uub0)
+- Supabase project: `berber-randevu` (ref: `usbdjyycpwfkscologii`, org: Alper-Yetik's Org)
+- Supabase bağlantısı Session pooler üzerinden (`aws-0-eu-west-1.pooler.supabase.com:5432`) — Transaction pooler ücretsiz planda IPv4 add-on gerektirdiği için tercih edilmedi
 
-## Yayın / Deployment
-- GitHub: https://github.com/Alper-Yetik/berber-randevu
-- Canlı: https://berber-randevu-bk4y.onrender.com (Render.com)
-- Render deploy config: `render.yaml` (buildCommand: `pip install -r requirements.txt`, startCommand: `python app.py`)
-
-## Teknoloji
-- Backend: Python + Flask (`app.py` — tek dosyalık monolith)
-- Veritabanı: production'da Supabase (PostgreSQL, `DATABASE_URL` env var varsa `USE_PG=True` olur); lokalde SQLite (`berber.db`)
-- `psycopg2-binary` ile Postgres bağlantısı; sorgu placeholder'ı PG'de `%s`, SQLite'da `?` (`PH` değişkeni)
-- Supabase bağlantısı Session pooler üzerinden (`aws-0-eu-west-1.pooler.supabase.com:5432`) — Transaction pooler ücretsiz planda IPv4 add-on gerektirdiği için Session pooler tercih edildi
-
-## Ortam Değişkenleri (Render'da ayarlanır)
-- `SECRET_KEY` — Flask session anahtarı (Render'da otomatik üretiliyor)
-- `ADMIN_PASSWORD` — `/admin` paneli şifresi (yoksa varsayılan `admin123`, production'da mutlaka set edilmeli)
-- `DATABASE_URL` — Supabase Postgres connection string (Session pooler, port 5432)
-
-## İş Mantığı
-- Hizmetler (`SERVICES` listesi, app.py:23): Saç Kesimi 30dk/150₺, Sakal Düzeltme 20dk/100₺, Saç+Sakal 45dk/230₺, Fön 20dk/80₺, Çocuk Kesimi 25dk/100₺
-- Çalışma saatleri (`WORKING_HOURS`, app.py:31): Pzt–Cmt 09:00–19:00, 30dk slotlar, Pazar kapalı
-- Admin paneli: `/admin`, şifre `ADMIN_PASSWORD` ile korunuyor
+## Mimari kararlar (kod okurken şaşırtabilecek noktalar)
+- Admin şifresi `settings` tablosunda hash'li tutulur (`/admin/sifre-degistir` ile değiştirilebilir). Ayrıca Render'daki `ADMIN_PASSWORD` env variable'ı HER ZAMAN yedek/master şifre olarak da geçerlidir (bkz. `admin_login`, `admin_change_password`) — panelden değiştirilen şifre unutulursa kilitlenmeyi önlemek için.
+- Hizmet fiyatları `services` tablosunda tutulur, koddaki `DEFAULT_SERVICES` sadece ilk kurulumda tabloyu doldurmak için kullanılır. Fiyatlar `/admin/hizmetler` üzerinden düzenlenir; kodda sabit değildir.
+- `appointments` tablosunda `(appointment_date, appointment_time)` üzerinde `status != 'cancelled'` koşullu unique index var (`ux_appt_slot`) — aynı saate çift randevu oluşmasını (double-submit / race condition) DB seviyesinde engeller. `randevu_al` içindeki insert bu yüzden `SlotTakenError`'ı yakalayıp zarif hata gösteriyor.
